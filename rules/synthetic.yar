@@ -40,3 +40,15 @@ rule Synthetic_Archive_Tag : synthetic binary
         uint16be(4) == 0x0100 and     // version 1, flags 0
         $tag in (8..31)
 }
+
+rule Synthetic_Practice_Receipt : synthetic text
+{
+    meta:
+        description = "Identifies a synthetic receipt with a fixed opening record"
+
+    strings:
+        $record = /LAB-RECEIPT\/1\r?\nreceipt_id=R[0-9]{4}\r?\nmode=practice(\r?\n|$)/
+
+    condition:
+        $record at 0
+}

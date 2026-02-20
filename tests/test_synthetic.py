@@ -27,6 +27,7 @@ REVIEW_FIELDS = (
 )
 ARCHIVE_HEADER = b"YLAB\x01\x00"
 ARCHIVE_TAG = b"training-archive"
+RECEIPT = b"LAB-RECEIPT/1\nreceipt_id=R0427\nmode=practice"
 
 
 def archive_at(offset: int) -> bytes:
@@ -91,6 +92,28 @@ class RuleRegressionTests(unittest.TestCase):
             b"YLAB\x01\x01" + valid[6:],
             valid[:5],
             valid[:-1],
+        ):
+            with self.subTest(data=data):
+                self.assert_matches(data)
+
+    def test_receipt_accepts_eof_and_line_endings(self):
+        for data in (
+            RECEIPT,
+            RECEIPT + b"\noperator_note=sample\n",
+            (RECEIPT + b"\n").replace(b"\n", b"\r\n"),
+            RECEIPT.replace(b"\n", b"\r\n", 1),
+        ):
+            with self.subTest(data=data):
+                self.assert_matches(data, "Synthetic_Practice_Receipt")
+
+    def test_receipt_rejects_malformed_opening_records(self):
+        for data in (
+            b"note\n" + RECEIPT,
+            RECEIPT.replace(b"R0427", b"R042"),
+            RECEIPT.replace(b"R0427", b"R04270"),
+            RECEIPT.replace(b"R0427", b"R04Z7"),
+            b"LAB-RECEIPT/1\nmode=practice\nreceipt_id=R0427",
+            RECEIPT + b"-draft\n",
         ):
             with self.subTest(data=data):
                 self.assert_matches(data)
