@@ -52,3 +52,16 @@ rule Synthetic_Practice_Receipt : synthetic text
     condition:
         $record at 0
 }
+
+rule Synthetic_Observer_Rollcall : synthetic text
+{
+    meta:
+        description = "Identifies a synthetic roll call with exactly three observer tokens"
+
+    strings:
+        $header = /LAB-ROLLCALL\/1\r?\n/
+        $seat   = "[seat:observer]"
+
+    condition:
+        $header at 0 and #seat == 3
+}

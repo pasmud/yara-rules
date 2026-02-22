@@ -28,6 +28,8 @@ REVIEW_FIELDS = (
 ARCHIVE_HEADER = b"YLAB\x01\x00"
 ARCHIVE_TAG = b"training-archive"
 RECEIPT = b"LAB-RECEIPT/1\nreceipt_id=R0427\nmode=practice"
+ROLLCALL_HEADER = b"LAB-ROLLCALL/1\n"
+OBSERVER_SEAT = b"[seat:observer]"
 
 
 def archive_at(offset: int) -> bytes:
@@ -114,6 +116,25 @@ class RuleRegressionTests(unittest.TestCase):
             RECEIPT.replace(b"R0427", b"R04Z7"),
             b"LAB-RECEIPT/1\nmode=practice\nreceipt_id=R0427",
             RECEIPT + b"-draft\n",
+        ):
+            with self.subTest(data=data):
+                self.assert_matches(data)
+
+    def test_rollcall_counts_literal_occurrences(self):
+        for data in (
+            ROLLCALL_HEADER + OBSERVER_SEAT * 3,
+            b"LAB-ROLLCALL/1\r\n" + b"\r\n".join([OBSERVER_SEAT] * 3),
+        ):
+            with self.subTest(data=data):
+                self.assert_matches(data, "Synthetic_Observer_Rollcall")
+
+    def test_rollcall_rejects_wrong_counts_and_headers(self):
+        for data in (
+            ROLLCALL_HEADER + OBSERVER_SEAT * 2 + b"[seat:Observer]",
+            ROLLCALL_HEADER + OBSERVER_SEAT * 4,
+            b"LAB-ROLLCALL/10\n" + OBSERVER_SEAT * 3,
+            b"notes\n" + ROLLCALL_HEADER + OBSERVER_SEAT * 3,
+            OBSERVER_SEAT * 3,
         ):
             with self.subTest(data=data):
                 self.assert_matches(data)
