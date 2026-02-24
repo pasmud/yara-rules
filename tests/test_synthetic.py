@@ -177,6 +177,29 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.stdout, "Catalog compiled.\n")
         self.assertEqual(result.stderr, "")
 
+    def test_check_json_inventory(self):
+        catalog = self.directory / "unordered.yar"
+        catalog.write_text(
+            'rule Zeta : text synthetic { meta: version = 2 description = "sample" '
+            "condition: false }\nrule Alpha { meta: reviewed = true condition: false }",
+            encoding="ascii",
+        )
+        stdout, stderr = StringIO(), StringIO()
+        with (
+            patch.object(scanner, "CATALOG", catalog),
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            status = main(["check", "--json"])
+        self.assertEqual(status, 0, stderr.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+        self.assertEqual(
+            stdout.getvalue(),
+            '{"rules": [{"identifier": "Alpha", "meta": {"reviewed": true}, "tags": []}, '
+            '{"identifier": "Zeta", "meta": {"description": "sample", "version": 2}, '
+            '"tags": ["synthetic", "text"]}]}\n',
+        )
+
     def test_scan_documented_example(self):
         result = self.run_cli("scan", str(EXAMPLE))
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -235,6 +258,7 @@ class CliTests(unittest.TestCase):
         catalog.write_text("rule Synthetic_Invalid { condition: }", encoding="ascii")
         with patch.object(scanner, "CATALOG", catalog):
             self.assert_main_error(["check"], "catalog compilation failed")
+            self.assert_main_error(["check", "--json"], "catalog compilation failed")
 
     def test_catalog_warning_fails_check(self):
         catalog = self.directory / "warning.yar"

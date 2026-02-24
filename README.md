@@ -39,6 +39,13 @@ by name, when multiple rules match.
 Errors are written to stderr. A missing engine or a compiler warning fails the
 command; an unsuccessful scan is never reported as a clean file.
 
+For a machine-readable inventory, run `python -m yara_lab check --json`.
+After successful compilation, stdout contains one JSON object with a `rules`
+array sorted by `identifier`. Each entry has an `identifier`, a sorted `tags`
+array, and a `meta` object preserving YARA metadata values. Object keys are
+sorted and the output ends in a newline, so the same catalog produces the same
+output. Compilation failures leave stdout empty and exit with status `2`.
+
 ## Rule catalog
 
 | Rule | Match criteria | Likely false positives |

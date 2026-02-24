@@ -1,6 +1,7 @@
 """Command-line interface for the synthetic marker lab."""
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -8,7 +9,10 @@ from pathlib import Path
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("check", help="compile the bundled catalog")
+    check = commands.add_parser("check", help="compile the bundled catalog")
+    check.add_argument(
+        "--json", action="store_true", help="print the rule inventory as JSON"
+    )
     scan = commands.add_parser("scan", help="scan one local regular file")
     scan.add_argument("file", type=Path)
     args = parser.parse_args(argv)
@@ -32,7 +36,18 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     if args.command == "check":
-        print("Catalog compiled.")
+        if args.json:
+            inventory = [
+                {
+                    "identifier": rule.identifier,
+                    "tags": sorted(rule.tags),
+                    "meta": rule.meta,
+                }
+                for rule in sorted(rules, key=lambda rule: rule.identifier)
+            ]
+            print(json.dumps({"rules": inventory}, sort_keys=True))
+        else:
+            print("Catalog compiled.")
         return 0
 
     try:
