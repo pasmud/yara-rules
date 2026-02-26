@@ -68,6 +68,9 @@ these conditions held, not that the file is safe.
   1 MiB (1,048,576 bytes), including empty files. It reads a bounded buffer
   once and passes those bytes to YARA with a two-second engine timeout. Use a
   stable file; reads are not atomic if another process changes the file.
+- Python callers using `yara_lab.scanner.match_names(rules, data)` get the same
+  byte limit and engine timeout. Oversized `bytes` raise `scanner.InputError`
+  before the engine is called; no partial sample is scanned.
 - This is a source-checkout CLI for controlled lab fixtures. It does not scan
   directories, stdin, processes, URLs, or archive contents, and it is not a sandbox.
 

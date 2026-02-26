@@ -35,6 +35,9 @@ def read_sample(path: Path) -> bytes:
 
 
 def match_names(rules: yara.Rules, data: bytes) -> list[str]:
+    """Match an in-memory sample under the same size limit as a file scan."""
+    if len(data) > MAX_SAMPLE_BYTES:
+        raise InputError(f"sample exceeds {MAX_SAMPLE_BYTES} bytes")
     return sorted(
         match.rule for match in rules.match(data=data, timeout=MATCH_TIMEOUT_SECONDS)
     )

@@ -7,7 +7,7 @@ from io import StringIO
 from itertools import combinations
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import yara
 
@@ -147,6 +147,19 @@ class RuleRegressionTests(unittest.TestCase):
         for data in (b"Inventory notes: training complete.\n", bytes(range(256)), b""):
             with self.subTest(data=data):
                 self.assert_matches(data)
+
+    def test_match_names_accepts_exact_size_limit(self):
+        padding = scanner.MAX_SAMPLE_BYTES - len(INTAKE)
+        self.assert_matches(
+            INTAKE_HEADER + bytes(padding) + INTAKE_STATUS, "Synthetic_Intake_Note"
+        )
+
+    def test_match_names_rejects_over_limit_before_engine(self):
+        rules = Mock(spec=yara.Rules)
+        data = bytes(scanner.MAX_SAMPLE_BYTES + 1)
+        with self.assertRaisesRegex(scanner.InputError, "exceeds 1048576 bytes"):
+            scanner.match_names(rules, data)
+        rules.match.assert_not_called()
 
 
 class CliTests(unittest.TestCase):
