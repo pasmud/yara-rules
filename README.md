@@ -74,6 +74,22 @@ these conditions held, not that the file is safe.
 - This is a source-checkout CLI for controlled lab fixtures. It does not scan
   directories, stdin, processes, URLs, or archive contents, and it is not a sandbox.
 
+## Offline rule review
+
+1. Inspect the rule diff and run `python -m yara_lab check --json` to verify
+   the compiled identifiers, tags, and descriptions.
+2. Run `python -m unittest discover -s tests -p test_rule_review.py -v` to
+   check the [synthetic review pairs](tests/test_rule_review.py) with real YARA.
+   Each rule has a benign lookalike that is expected to match and a similar
+   input that should not. For example, the intake rule matches a draft comment
+   containing `status=training-only-draft` because it checks for a substring.
+   Exact match lists also catch accidental hits from other rules.
+3. For a rule change, decide whether each known benign collision should still
+   match before updating expectations. Record any changed boundary or false
+   positive in the rule catalog above. Add a pair for every new rule; the
+   review test checks coverage against the compiled catalog. Run the full
+   verification below before submitting the change.
+
 ## Verification
 
 From the checkout root with the virtual environment activated:
